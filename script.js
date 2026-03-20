@@ -261,7 +261,7 @@ function renderKeypad(type) {
             <button class="btn btn-round btn-num text-lg md:text-2xl text-text-orange dark:text-stripe-yellow" onclick="appendNumber('3')">3</button>
             <button class="btn btn-round btn-op text-lg md:text-2xl text-white" onclick="appendOperator('+')">+</button>
             <button class="btn btn-wide btn-num text-lg md:text-2xl text-text-orange dark:text-stripe-yellow col-span-2 rounded-[20px] md:rounded-[30px]" onclick="appendNumber('0')">0</button>
-            <button class="btn btn-round btn-num text-lg md:text-2xl text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">.</button>
+            <button class="btn btn-round btn-num text-lg md:text-2xl text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">,</button>
             <button class="btn btn-round btn-op text-lg md:text-2xl text-white" onclick="calcResult()">=</button>
         `;
   } else if (type === "scientific") {
@@ -292,7 +292,7 @@ function renderKeypad(type) {
             
             <button class="btn text-sm md:text-lg btn-op text-white py-2" onclick="execMath('sqrt')">√</button>
             <button class="btn text-sm md:text-lg btn-num text-text-orange dark:text-stripe-yellow col-span-2 rounded-[20px]" onclick="appendNumber('0')">0</button>
-            <button class="btn text-sm md:text-lg btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">.</button>
+            <button class="btn text-sm md:text-lg btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">,</button>
             <button class="btn text-sm md:text-lg btn-op text-white" onclick="calcResult()">=</button>
         `;
   } else if (type === "programmer") {
@@ -346,20 +346,60 @@ function renderKeypad(type) {
             <button class="btn btn-round btn-num text-lg md:text-2xl text-text-orange dark:text-stripe-yellow" onclick="appendNumber('3')">3</button>
             
             <button class="btn btn-wide btn-num text-lg md:text-2xl text-text-orange dark:text-stripe-yellow col-span-2 rounded-[20px] md:rounded-[30px]" onclick="appendNumber('0')">0</button>
-            <button class="btn btn-round btn-num text-lg md:text-2xl text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">.</button>
+            <button class="btn btn-round btn-num text-lg md:text-2xl text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">,</button>
         `;
   }
 }
 
+function formatDisplayNumber(numStr) {
+    if (!numStr || numStr === "Error" || numStr === "E") return numStr;
+    if (numStr.includes("e") || numStr.includes("E")) {
+        let str = numStr.toLowerCase().replace('.', ',');
+        if (!str.includes(',')) {
+            str = str.replace('e', ',e');
+        }
+        return str;
+    }
+    
+    let parts = numStr.split('.');
+    let intPart = parts[0];
+    let decPart = parts.length > 1 ? ',' + parts[1] : '';
+    
+    let isNegative = intPart.startsWith("-");
+    if (isNegative) intPart = intPart.substring(1);
+    
+    intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    
+    return (isNegative ? "-" : "") + intPart + decPart;
+}
+
 function updateDisplay() {
   if (calcMode !== "standard" && calcMode !== "scientific") return;
-  document.getElementById("result").innerText = currentInput || "0";
+  document.getElementById("result").innerText = formatDisplayNumber(currentInput || "0");
   document.getElementById("history").innerText = operator
-    ? `${previousInput} ${operator}`
+    ? `${formatDisplayNumber(previousInput)} ${operator}`
     : "";
 }
 
+function formatResultStr(res) {
+  if (typeof res !== "number" || isNaN(res)) return res.toString();
+  let resStr = res.toString();
+  if (Math.abs(res) >= 1e16) {
+      return res.toExponential();
+  } else if (resStr.length > 16) {
+      if (resStr.includes('.')) {
+          return parseFloat(res.toPrecision(15)).toString();
+      }
+      return resStr.substring(0, 16);
+  }
+  return resStr;
+}
+
 function appendNumber(num) {
+  if (currentInput === "Error" || currentInput === "E") {
+    currentInput = "";
+  }
+  if (currentInput.replace(/[^0-9]/g, "").length >= 16) return;
   if (num === "." && currentInput.includes(".")) return;
   currentInput = currentInput === "0" && num !== "." ? num : currentInput + num;
   if (calcMode === "standard" || calcMode === "scientific") updateDisplay();
@@ -369,6 +409,7 @@ function appendNumber(num) {
 
 function appendOperator(op) {
   if (!currentInput && !previousInput) return;
+  if (currentInput === "Error" || currentInput === "E") return;
   if (currentInput && previousInput && operator) calcResult(false);
   if (currentInput) {
     previousInput = currentInput;
@@ -379,27 +420,36 @@ function appendOperator(op) {
 }
 
 function execMath(func) {
-  if (!currentInput) return;
+  if (!currentInput || currentInput === "Error" || currentInput === "E") return;
   let val = parseFloat(currentInput);
   let original = currentInput;
+  let res;
   switch (func) {
     case "sin":
-      currentInput = Math.sin(val).toFixed(8);
+      res = Math.sin(val);
       break;
     case "cos":
-      currentInput = Math.cos(val).toFixed(8);
+      res = Math.cos(val);
       break;
     case "tan":
-      currentInput = Math.tan(val).toFixed(8);
+      res = Math.tan(val);
       break;
     case "sqrt":
-      currentInput = Math.sqrt(val).toString();
+      res = Math.sqrt(val);
       break;
     case "log":
-      currentInput = Math.log10(val).toString();
+      res = Math.log10(val);
       break;
   }
-  currentInput = parseFloat(currentInput).toString();
+  
+  if (isNaN(res)) {
+      res = "Error";
+  } else {
+      res = Math.round(res * 1e8) / 1e8;
+  }
+  
+  let formattedRes = res === "Error" ? "Error" : formatResultStr(res);
+  currentInput = formattedRes;
   addToHistory(`${func}(${original})`, currentInput);
   updateDisplay();
 }
@@ -426,15 +476,19 @@ function calcResult(isFinal = true) {
       res = prev % curr;
       break;
   }
-  res = typeof res === "number" ? Math.round(res * 1e8) / 1e8 : res;
+  if (res !== "Error") {
+    res = typeof res === "number" ? Math.round(res * 1e8) / 1e8 : res;
+  }
+
+  let formattedRes = res === "Error" ? "Error" : formatResultStr(res);
 
   if (isFinal) {
-    addToHistory(`${prev} ${operator} ${curr}`, res);
-    currentInput = res.toString();
+    addToHistory(`${prev} ${operator} ${curr}`, formattedRes);
+    currentInput = formattedRes;
     operator = null;
     previousInput = "";
   } else {
-    currentInput = res.toString();
+    currentInput = formattedRes;
   }
   updateDisplay();
 }
@@ -450,7 +504,7 @@ function clearDisplay() {
 }
 
 function toggleSign() {
-  if (!currentInput) return;
+  if (!currentInput || currentInput === "Error" || currentInput === "E") return;
   currentInput = (parseFloat(currentInput) * -1).toString();
   updateDisplay();
   updateTempUI();
@@ -458,7 +512,14 @@ function toggleSign() {
 }
 
 function backspace() {
-  if (!currentInput) return;
+  if (!currentInput || currentInput === "Error" || currentInput === "E") {
+      currentInput = "";
+      updateDisplay();
+      updateProgUI();
+      updateCurrencyUI();
+      updateTempUI();
+      return;
+  }
   currentInput = currentInput.slice(0, -1);
   if (currentInput === "" || currentInput === "-") currentInput = "";
   updateDisplay();
@@ -520,12 +581,15 @@ function refreshProgKeys() {
 }
 
 function appendProg(char) {
+  if (currentInput === "E" || currentInput === "Error") currentInput = "";
+  if (currentInput.replace(/[^0-9A-F]/i, "").length >= 15) return;
   currentInput = currentInput === "0" ? char : currentInput + char;
   updateProgUI();
 }
 
 function appendProgOp(op) {
   if (!currentInput) return;
+  if (currentInput === "E" || currentInput === "Error") return;
   let logicalOp = op === "×" ? "*" : op === "÷" ? "/" : op;
   if (previousInput && operator) calcProgResult();
   previousInput = currentInput;
@@ -549,10 +613,16 @@ function calcProgResult() {
       res = prev * curr;
       break;
     case "/":
-      res = Math.floor(prev / curr);
+      res = curr === 0 ? "Error" : Math.floor(prev / curr);
       break;
   }
-  currentInput = res.toString(progBase).toUpperCase();
+  let formattedRes = res;
+  if (res !== "Error") {
+      let resStr = res.toString(progBase).toUpperCase();
+      if (resStr.length > 15) formattedRes = "E";
+      else formattedRes = resStr;
+  }
+  currentInput = formattedRes.toString().toUpperCase();
   operator = null;
   previousInput = "";
   updateProgUI();
@@ -599,7 +669,7 @@ async function fetchCurrencies() {
 function updateCurrencyUI() {
   if (calcMode !== "currency") return;
   let val = parseFloat(currentInput || "0");
-  document.getElementById("curr-input").innerText = val.toLocaleString("en-US");
+  document.getElementById("curr-input").innerText = formatDisplayNumber(currentInput || "0");
   const fromVal =
     document.getElementById("curr-from-dropdown").getAttribute("data-value") ||
     "USD";
@@ -610,7 +680,7 @@ function updateCurrencyUI() {
   const toRate = exchangeRates[toVal] || 1;
   let converted = (val / fromRate) * toRate;
   document.getElementById("curr-output").innerText = converted.toLocaleString(
-    "en-US",
+    "id-ID",
     { maximumFractionDigits: 2 },
   );
 }
@@ -618,7 +688,7 @@ function updateCurrencyUI() {
 function updateTempUI() {
   if (calcMode !== "temperature") return;
   let val = parseFloat(currentInput || "0");
-  document.getElementById("temp-input").innerText = currentInput || "0";
+  document.getElementById("temp-input").innerText = formatDisplayNumber(currentInput || "0");
   const fromType = document
     .getElementById("temp-from-dropdown")
     .getAttribute("data-value");
@@ -634,7 +704,7 @@ function updateTempUI() {
   else if (toType === "F") converted = (celsius * 9) / 5 + 32;
   else if (toType === "K") converted = celsius + 273.15;
   document.getElementById("temp-output").innerText = converted.toLocaleString(
-    "en-US",
+    "id-ID",
     { maximumFractionDigits: 2 },
   );
 }
