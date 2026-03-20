@@ -2,13 +2,13 @@ let currentInput = "";
 let previousInput = "";
 let operator = null;
 let calcMode = "standard";
-let historyData = [];
+let progBase = 10;
+let exchangeRates = {};
 
-const resultDisplay = document.getElementById("result");
-const historyDisplay = document.getElementById("history");
-const historyList = document.getElementById("history-list");
-const btnSpecial = document.getElementById("btn-special");
-const calcTitle = document.getElementById("calc-title");
+const keypadContainer = document.getElementById("keypad-container");
+const scrStd = document.getElementById("screen-std");
+const scrCurr = document.getElementById("screen-currency");
+const scrProg = document.getElementById("screen-prog");
 
 document.addEventListener("DOMContentLoaded", () => {
   if (
@@ -19,180 +19,342 @@ document.addEventListener("DOMContentLoaded", () => {
     document.documentElement.classList.add("dark");
     updateThemeUI(true);
   }
+  renderKeypad("standard");
+  fetchCurrencies();
 });
 
-const sidebar = document.getElementById("menu-sidebar");
-const backdrop = document.getElementById("menu-backdrop");
-let isMenuOpen = false;
-
 function toggleMenu() {
-  isMenuOpen = !isMenuOpen;
-  if (isMenuOpen) {
-    backdrop.classList.remove("hidden");
+  const isMenuOpen = !document
+    .getElementById("menu-backdrop")
+    .classList.contains("hidden");
+  if (!isMenuOpen) {
+    document.getElementById("menu-backdrop").classList.remove("hidden");
     setTimeout(() => {
-      backdrop.classList.remove("opacity-0");
-      sidebar.classList.remove("-translate-x-full");
+      document.getElementById("menu-backdrop").classList.remove("opacity-0");
+      document
+        .getElementById("menu-sidebar")
+        .classList.remove("-translate-x-full");
     }, 10);
   } else {
-    backdrop.classList.add("opacity-0");
-    sidebar.classList.add("-translate-x-full");
-    setTimeout(() => backdrop.classList.add("hidden"), 300);
+    document.getElementById("menu-backdrop").classList.add("opacity-0");
+    document.getElementById("menu-sidebar").classList.add("-translate-x-full");
+    setTimeout(
+      () => document.getElementById("menu-backdrop").classList.add("hidden"),
+      300,
+    );
   }
 }
-
 function toggleTheme() {
   const isDark = document.documentElement.classList.toggle("dark");
   localStorage.setItem("theme", isDark ? "dark" : "light");
   updateThemeUI(isDark);
 }
-
 function updateThemeUI(isDark) {
   document.getElementById("theme-text").innerText = isDark
     ? "Light Mode"
     : "Dark Mode";
-  const knob = document.getElementById("theme-knob");
   isDark
-    ? knob.classList.add("translate-x-4")
-    : knob.classList.remove("translate-x-4");
+    ? document.getElementById("theme-knob").classList.add("translate-x-4")
+    : document.getElementById("theme-knob").classList.remove("translate-x-4");
 }
 
 function setMode(mode) {
   calcMode = mode;
-  calcTitle.innerText = mode;
+  currentInput = "";
+  previousInput = "";
+  operator = null;
+  document.getElementById("calc-title").innerText = mode;
 
-  const btnStd = document.getElementById("btn-std");
-  const btnSci = document.getElementById("btn-sci");
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.classList.remove("bg-stripe-orange", "text-white");
+    btn.classList.add(
+      "bg-keypad-bg",
+      "dark:bg-gray-700",
+      "text-gray-800",
+      "dark:text-gray-100",
+    );
+  });
+  event.currentTarget.classList.add("bg-stripe-orange", "text-white");
+  event.currentTarget.classList.remove(
+    "bg-keypad-bg",
+    "dark:bg-gray-700",
+    "text-gray-800",
+    "dark:text-gray-100",
+  );
 
+  scrStd.classList.add("hidden");
+  scrCurr.classList.add("hidden");
+  scrProg.classList.add("hidden");
   if (mode === "standard") {
-    btnSpecial.innerText = "%";
-    btnStd.className =
-      "text-left p-3 rounded-xl bg-stripe-orange text-white font-medium shadow-md transition-colors";
-    btnSci.className =
-      "text-left p-3 rounded-xl bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium transition-colors";
-  } else {
-    btnSpecial.innerText = "√";
-    btnSci.className =
-      "text-left p-3 rounded-xl bg-stripe-orange text-white font-medium shadow-md transition-colors";
-    btnStd.className =
-      "text-left p-3 rounded-xl bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium transition-colors";
+    scrStd.classList.remove("hidden");
+    renderKeypad("standard");
+    updateDisplay();
   }
-  toggleMenu(); 
-}
-
-function addToHistory(equation, result) {
-  historyData.push(`${equation} = ${result}`);
-  renderHistory();
-}
-
-function renderHistory() {
-  if (historyData.length === 0) {
-    historyList.innerHTML =
-      '<span class="opacity-50 italic">No history yet...</span>';
-    return;
+  if (mode === "currency") {
+    scrCurr.classList.remove("hidden");
+    renderKeypad("currency");
+    updateCurrencyUI();
   }
-  historyList.innerHTML = historyData
-    .map(
-      (item) =>
-        `<div class="border-b border-gray-300 dark:border-gray-600 pb-1 mb-1 last:border-0">${item}</div>`,
-    )
-    .reverse()
-    .join("");
+  if (mode === "programmer") {
+    scrProg.classList.remove("hidden");
+    renderKeypad("programmer");
+    updateProgUI();
+  }
+
+  toggleMenu();
 }
 
-function clearHistory() {
-  historyData = [];
-  renderHistory();
+function renderKeypad(type) {
+  keypadContainer.className =
+    type === "programmer" ? "grid grid-prog h-full" : "grid grid-std h-full";
+
+  const stdBtns = `
+        <button class="btn btn-round btn-action text-white" onclick="clearDisplay()">C</button>
+        <button class="btn btn-round btn-op text-white" onclick="toggleSign()">±</button>
+        <button class="btn btn-round btn-op text-white" onclick="appendOperator('%')">%</button>
+        <button class="btn btn-round btn-op text-white" onclick="appendOperator('/')">÷</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('7')">7</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('8')">8</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('9')">9</button>
+        <button class="btn btn-round btn-op text-white" onclick="appendOperator('*')">×</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('4')">4</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('5')">5</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('6')">6</button>
+        <button class="btn btn-round btn-op text-white" onclick="appendOperator('-')">-</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('1')">1</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('2')">2</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('3')">3</button>
+        <button class="btn btn-round btn-op text-white" onclick="appendOperator('+')">+</button>
+        <button class="btn btn-wide btn-num text-text-orange dark:text-stripe-yellow col-span-2 rounded-[30px]" onclick="appendNumber('0')">0</button>
+        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">.</button>
+        <button class="btn btn-round btn-op text-white" onclick="calcResult()">=</button>
+    `;
+
+  const progBtns = `
+        <button class="btn btn-small btn-action text-white" onclick="clearDisplay()">C</button>
+        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('A')">A</button>
+        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('B')">B</button>
+        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('C')">C</button>
+        <button class="btn btn-small btn-op text-white" onclick="appendProgOp('/')">÷</button>
+
+        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('D')">D</button>
+        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('E')">E</button>
+        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('F')">F</button>
+        <button class="btn btn-small btn-op text-white" onclick="appendProgOp('*')">×</button>
+        <button class="btn btn-small btn-op text-white" onclick="appendProgOp('-')">-</button>
+
+        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('7')">7</button>
+        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('8')">8</button>
+        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('9')">9</button>
+        <button class="btn btn-small btn-op text-white" onclick="appendProgOp('+')">+</button>
+        <button class="btn btn-small btn-op text-white" onclick="calcProgResult()">=</button>
+
+        <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('4')">4</button>
+        <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('5')">5</button>
+        <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('6')">6</button>
+        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('1')">1</button>
+        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('2')">2</button>
+        
+        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('3')">3</button>
+        <button class="btn btn-small btn-num prog-bin text-text-orange col-span-2 rounded-[20px]" onclick="appendProg('0')">0</button>
+        <button class="btn btn-small btn-num text-text-orange opacity-40 cursor-not-allowed">.</button>
+        <button class="btn btn-small btn-num opacity-40 cursor-not-allowed">±</button>
+    `;
+
+  keypadContainer.innerHTML = type === "programmer" ? progBtns : stdBtns;
+  if (type === "programmer") refreshProgKeys();
 }
 
 function updateDisplay() {
-  resultDisplay.innerText = currentInput === "" ? "0" : currentInput;
-  if (operator != null) {
-    let displayOp = operator === "*" ? "×" : operator === "/" ? "÷" : operator;
-    historyDisplay.innerText = `${previousInput} ${displayOp}`;
-  } else {
-    historyDisplay.innerText = "";
-  }
+  if (calcMode !== "standard") return;
+  document.getElementById("result").innerText = currentInput || "0";
+  document.getElementById("history").innerText = operator
+    ? `${previousInput} ${operator}`
+    : "";
 }
-
-function appendNumber(number) {
-  if (number === "." && currentInput.includes(".")) return;
-  if (currentInput === "0" && number !== ".") currentInput = number;
-  else currentInput += number;
-  updateDisplay();
+function appendNumber(num) {
+  if (num === "." && currentInput.includes(".")) return;
+  currentInput = currentInput === "0" && num !== "." ? num : currentInput + num;
+  if (calcMode === "standard") updateDisplay();
+  if (calcMode === "currency") updateCurrencyUI();
 }
-
 function appendOperator(op) {
-  if (currentInput === "" && previousInput === "") return;
-  if (currentInput !== "" && previousInput !== "" && operator !== null)
-    calculateResult(false);
-
-  if (currentInput !== "") {
+  if (calcMode !== "standard") return;
+  if (!currentInput && !previousInput) return;
+  if (currentInput && previousInput && operator) calcResult(false);
+  if (currentInput) {
     previousInput = currentInput;
     currentInput = "";
   }
   operator = op;
   updateDisplay();
 }
-
-function handleSpecialOp() {
-  if (currentInput === "") return;
-  let prevVal = parseFloat(currentInput);
-  if (calcMode === "standard") {
-    currentInput = (prevVal / 100).toString();
-  } else {
-    if (prevVal < 0) currentInput = "Error";
-    else currentInput = Math.sqrt(prevVal).toString();
-  }
-  updateDisplay();
-}
-
-function calculateResult(isFinal = true) {
+function calcResult(isFinal = true) {
+  if (calcMode !== "standard") return;
   const prev = parseFloat(previousInput);
-  const current = parseFloat(currentInput);
-  if (isNaN(prev) || isNaN(current)) return;
-
-  let result;
+  const curr = parseFloat(currentInput);
+  if (isNaN(prev) || isNaN(curr)) return;
+  let res;
   switch (operator) {
     case "+":
-      result = prev + current;
+      res = prev + curr;
       break;
     case "-":
-      result = prev - current;
+      res = prev - curr;
       break;
     case "*":
-      result = prev * current;
+      res = prev * curr;
       break;
     case "/":
-      result = current === 0 ? "Error" : prev / current;
+      res = curr === 0 ? "Error" : prev / curr;
       break;
-    default:
-      return;
+    case "%":
+      res = prev % curr;
+      break;
   }
-
-  result = Math.round(result * 100000000) / 100000000;
-
+  res = typeof res === "number" ? Math.round(res * 1e8) / 1e8 : res;
   if (isFinal) {
-    let displayOp = operator === "*" ? "×" : operator === "/" ? "÷" : operator;
-    let equation = `${prev} ${displayOp} ${current}`;
-    addToHistory(equation, result);
-    currentInput = result.toString();
+    currentInput = res.toString();
     operator = null;
     previousInput = "";
   } else {
-    currentInput = result.toString();
+    currentInput = res.toString();
   }
   updateDisplay();
 }
-
 function clearDisplay() {
   currentInput = "";
   previousInput = "";
   operator = null;
   updateDisplay();
+  updateProgUI();
+  updateCurrencyUI();
 }
-
 function toggleSign() {
-  if (currentInput === "") return;
+  if (!currentInput) return;
   currentInput = (parseFloat(currentInput) * -1).toString();
   updateDisplay();
+}
+
+function setProgBase(base) {
+  progBase = base;
+  let baseNames = { 16: "HEX", 10: "DEC", 8: "OCT", 2: "BIN" };
+  document.querySelectorAll("#screen-prog > div").forEach((el) => {
+    el.classList.remove("text-stripe-orange", "font-bold", "text-base");
+    el.classList.add("hover:text-black", "dark:hover:text-white");
+  });
+  let activeRow = document.getElementById(
+    `prog-${baseNames[base].toLowerCase()}`,
+  ).parentElement;
+  activeRow.classList.add("text-stripe-orange", "font-bold", "text-base");
+  activeRow.classList.remove("hover:text-black", "dark:hover:text-white");
+
+  if (currentInput && currentInput !== "Error") {
+    let decimalValue = parseInt(
+      currentInput,
+      [16, 10, 8, 2].includes(progBase) ? prevBase : 10,
+    );
+    if (!isNaN(decimalValue))
+      currentInput = decimalValue.toString(progBase).toUpperCase();
+  }
+  window.prevBase = progBase;
+  refreshProgKeys();
+  updateProgUI();
+}
+function refreshProgKeys() {
+  document
+    .querySelectorAll(".prog-hex, .prog-dec, .prog-oct, .prog-bin")
+    .forEach((btn) => (btn.disabled = true));
+  document
+    .querySelectorAll(".prog-bin")
+    .forEach((btn) => (btn.disabled = false));
+  if (progBase <= 8)
+    document.querySelectorAll(".prog-oct").forEach((btn) => {
+      if (parseInt(btn.innerText) < progBase) btn.disabled = false;
+    });
+  if (progBase <= 10)
+    document.querySelectorAll(".prog-dec, .prog-oct").forEach((btn) => {
+      if (parseInt(btn.innerText) < progBase) btn.disabled = false;
+    });
+  if (progBase === 16)
+    document
+      .querySelectorAll(".prog-hex, .prog-dec, .prog-oct")
+      .forEach((btn) => (btn.disabled = false));
+}
+function appendProg(char) {
+  currentInput = currentInput === "0" ? char : currentInput + char;
+  updateProgUI();
+}
+function appendProgOp(op) {
+  if (!currentInput) return;
+  if (previousInput && operator) calcProgResult();
+  previousInput = currentInput;
+  currentInput = "";
+  operator = op;
+}
+function calcProgResult() {
+  const prev = parseInt(previousInput, progBase);
+  const curr = parseInt(currentInput, progBase);
+  if (isNaN(prev) || isNaN(curr)) return;
+  let res = 0;
+  switch (operator) {
+    case "+":
+      res = prev + curr;
+      break;
+    case "-":
+      res = prev - curr;
+      break;
+    case "*":
+      res = prev * curr;
+      break;
+    case "/":
+      res = Math.floor(prev / curr);
+      break;
+  }
+  currentInput = res.toString(progBase).toUpperCase();
+  operator = null;
+  previousInput = "";
+  updateProgUI();
+}
+function updateProgUI() {
+  if (calcMode !== "programmer") return;
+  let decVal = parseInt(currentInput || "0", progBase);
+  if (isNaN(decVal)) decVal = 0;
+  document.getElementById("prog-hex").innerText = decVal
+    .toString(16)
+    .toUpperCase();
+  document.getElementById("prog-dec").innerText = decVal.toString(10);
+  document.getElementById("prog-oct").innerText = decVal.toString(8);
+  document.getElementById("prog-bin").innerText = decVal.toString(2);
+}
+
+async function fetchCurrencies() {
+  try {
+    const res = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+    const data = await res.json();
+    exchangeRates = data.rates;
+    const fromSel = document.getElementById("curr-from");
+    const toSel = document.getElementById("curr-to");
+    Object.keys(exchangeRates).forEach((currency) => {
+      fromSel.innerHTML += `<option value="${currency}" ${currency === "USD" ? "selected" : ""}>${currency}</option>`;
+      toSel.innerHTML += `<option value="${currency}" ${currency === "IDR" ? "selected" : ""}>${currency}</option>`;
+    });
+    fromSel.addEventListener("change", updateCurrencyUI);
+    toSel.addEventListener("change", updateCurrencyUI);
+  } catch (e) {
+    document.getElementById("curr-output").innerText = "API Error";
+  }
+}
+function updateCurrencyUI() {
+  if (calcMode !== "currency") return;
+  let val = parseFloat(currentInput || "0");
+  document.getElementById("curr-input").innerText = val.toLocaleString("en-US");
+  const fromRate =
+    exchangeRates[document.getElementById("curr-from").value] || 1;
+  const toRate = exchangeRates[document.getElementById("curr-to").value] || 1;
+  let converted = (val / fromRate) * toRate;
+  document.getElementById("curr-output").innerText = converted.toLocaleString(
+    "en-US",
+    { maximumFractionDigits: 2 },
+  );
 }
