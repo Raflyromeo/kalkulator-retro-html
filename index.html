@@ -41,7 +41,6 @@
     <div
       id="menu-backdrop"
       class="fixed inset-0 bg-black/50 z-40 hidden opacity-0 transition-opacity duration-300"
-      onclick="toggleMenu()"
     ></div>
 
     <div
@@ -53,7 +52,7 @@
       >
         <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">Menu</h2>
         <button
-          onclick="toggleMenu()"
+          id="close-menu-btn"
           class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-bold text-2xl"
         >
           &times;
@@ -61,7 +60,7 @@
       </div>
       <div class="p-5 flex-grow overflow-y-auto flex flex-col gap-5">
         <button
-          onclick="toggleTheme()"
+          id="theme-toggle-btn"
           class="w-full flex items-center justify-between p-3 rounded-xl bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-inner font-medium"
         >
           <span id="theme-text">Dark Mode</span>
@@ -83,31 +82,31 @@
           </p>
           <div class="flex flex-col gap-2" id="mode-selectors">
             <button
-              onclick="setMode('standard')"
+              data-mode="standard"
               class="mode-btn active bg-stripe-orange text-white p-3 rounded-xl font-medium shadow-md text-left transition-colors text-sm sm:text-base"
             >
               Standard
             </button>
             <button
-              onclick="setMode('scientific')"
+              data-mode="scientific"
               class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors text-sm sm:text-base"
             >
               Scientific
             </button>
             <button
-              onclick="setMode('programmer')"
+              data-mode="programmer"
               class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors text-sm sm:text-base"
             >
               Programmer
             </button>
             <button
-              onclick="setMode('currency')"
+              data-mode="currency"
               class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors text-sm sm:text-base"
             >
               Currency
             </button>
             <button
-              onclick="setMode('temperature')"
+              data-mode="temperature"
               class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors text-sm sm:text-base"
             >
               Temperature
@@ -120,10 +119,7 @@
             class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-widest flex justify-between items-center"
           >
             History
-            <button
-              onclick="clearHistory()"
-              class="text-red-500 hover:underline"
-            >
+            <button id="clear-history-btn" class="text-red-500 hover:underline">
               Clear
             </button>
           </p>
@@ -136,7 +132,7 @@
         </div>
 
         <button
-          onclick="toggleModal()"
+          id="open-modal-btn"
           class="mt-auto w-full p-3 rounded-xl bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-bold shadow-md hover:opacity-90 transition-opacity"
         >
           Info Pembuat
@@ -157,7 +153,7 @@
             Tentang Pembuat
           </h3>
           <button
-            onclick="toggleModal()"
+            id="close-modal-btn"
             class="text-gray-500 hover:text-red-500 text-2xl font-bold leading-none"
           >
             &times;
@@ -254,10 +250,7 @@
         <div
           class="flex justify-between items-center mb-4 md:mb-6 mt-1 md:mt-2"
         >
-          <div
-            class="cursor-pointer hover:opacity-70 p-1"
-            onclick="toggleMenu()"
-          >
+          <div class="cursor-pointer hover:opacity-70 p-1" id="open-menu-btn">
             <div
               class="w-6 md:w-8 h-1 md:h-1.5 bg-black dark:bg-gray-300 rounded-full mb-1 md:mb-1.5"
             ></div>
@@ -299,12 +292,38 @@
             class="hidden flex flex-col justify-between h-full w-full"
           >
             <div
-              class="flex justify-between items-center border-b border-gray-400 dark:border-gray-500 pb-2"
+              class="flex justify-between items-center border-b border-gray-400 dark:border-gray-500 pb-2 relative z-30"
             >
-              <select
-                id="curr-from"
-                class="bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white font-bold cursor-pointer p-1 rounded-md text-sm md:text-base border border-gray-400"
-              ></select>
+              <div
+                class="custom-dropdown relative w-28 md:w-36"
+                id="curr-from-dropdown"
+                data-value="USD"
+              >
+                <div
+                  class="select-btn flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg px-2 py-1 cursor-pointer"
+                >
+                  <span
+                    class="sBtn-text text-xs md:text-sm font-bold text-gray-800 dark:text-white truncate"
+                    >USD</span
+                  >
+                  <svg
+                    class="chevron w-4 h-4 text-gray-800 dark:text-white transition-transform duration-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
+                  </svg>
+                </div>
+                <ul
+                  class="options absolute left-0 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg shadow-lg hidden max-h-32 overflow-y-auto z-50 dropdown-scroll"
+                ></ul>
+              </div>
               <div
                 id="curr-input"
                 class="text-xl md:text-2xl font-bold text-screen-border dark:text-white"
@@ -312,11 +331,37 @@
                 0
               </div>
             </div>
-            <div class="flex justify-between items-center pt-2">
-              <select
-                id="curr-to"
-                class="bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white font-bold cursor-pointer p-1 rounded-md text-sm md:text-base border border-gray-400"
-              ></select>
+            <div class="flex justify-between items-center pt-2 relative z-20">
+              <div
+                class="custom-dropdown relative w-28 md:w-36"
+                id="curr-to-dropdown"
+                data-value="IDR"
+              >
+                <div
+                  class="select-btn flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg px-2 py-1 cursor-pointer"
+                >
+                  <span
+                    class="sBtn-text text-xs md:text-sm font-bold text-gray-800 dark:text-white truncate"
+                    >IDR</span
+                  >
+                  <svg
+                    class="chevron w-4 h-4 text-gray-800 dark:text-white transition-transform duration-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
+                  </svg>
+                </div>
+                <ul
+                  class="options absolute left-0 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg shadow-lg hidden max-h-32 overflow-y-auto z-50 dropdown-scroll"
+                ></ul>
+              </div>
               <div
                 id="curr-output"
                 class="text-2xl md:text-3xl font-bold text-stripe-orange"
@@ -331,17 +376,57 @@
             class="hidden flex flex-col justify-between h-full w-full"
           >
             <div
-              class="flex justify-between items-center border-b border-gray-400 dark:border-gray-500 pb-2"
+              class="flex justify-between items-center border-b border-gray-400 dark:border-gray-500 pb-2 relative z-30"
             >
-              <select
-                id="temp-from"
-                onchange="updateTempUI()"
-                class="bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white font-bold cursor-pointer p-1 rounded-md text-sm md:text-base border border-gray-400"
+              <div
+                class="custom-dropdown relative w-32 md:w-40"
+                id="temp-from-dropdown"
+                data-value="C"
               >
-                <option value="C">Celsius (°C)</option>
-                <option value="F">Fahrenheit (°F)</option>
-                <option value="K">Kelvin (K)</option>
-              </select>
+                <div
+                  class="select-btn flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg px-2 py-1 cursor-pointer"
+                >
+                  <span
+                    class="sBtn-text text-xs md:text-sm font-bold text-gray-800 dark:text-white truncate"
+                    >Celsius (°C)</span
+                  >
+                  <svg
+                    class="chevron w-4 h-4 text-gray-800 dark:text-white transition-transform duration-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
+                  </svg>
+                </div>
+                <ul
+                  class="options absolute left-0 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg shadow-lg hidden max-h-32 overflow-y-auto z-50 dropdown-scroll"
+                >
+                  <li
+                    class="option px-2 py-1.5 text-xs md:text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-medium"
+                    data-value="C"
+                  >
+                    Celsius (°C)
+                  </li>
+                  <li
+                    class="option px-2 py-1.5 text-xs md:text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-medium"
+                    data-value="F"
+                  >
+                    Fahrenheit (°F)
+                  </li>
+                  <li
+                    class="option px-2 py-1.5 text-xs md:text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-medium"
+                    data-value="K"
+                  >
+                    Kelvin (K)
+                  </li>
+                </ul>
+              </div>
               <div
                 id="temp-input"
                 class="text-xl md:text-2xl font-bold text-screen-border dark:text-white"
@@ -349,16 +434,56 @@
                 0
               </div>
             </div>
-            <div class="flex justify-between items-center pt-2">
-              <select
-                id="temp-to"
-                onchange="updateTempUI()"
-                class="bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white font-bold cursor-pointer p-1 rounded-md text-sm md:text-base border border-gray-400"
+            <div class="flex justify-between items-center pt-2 relative z-20">
+              <div
+                class="custom-dropdown relative w-32 md:w-40"
+                id="temp-to-dropdown"
+                data-value="F"
               >
-                <option value="F">Fahrenheit (°F)</option>
-                <option value="C">Celsius (°C)</option>
-                <option value="K">Kelvin (K)</option>
-              </select>
+                <div
+                  class="select-btn flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg px-2 py-1 cursor-pointer"
+                >
+                  <span
+                    class="sBtn-text text-xs md:text-sm font-bold text-gray-800 dark:text-white truncate"
+                    >Fahrenheit (°F)</span
+                  >
+                  <svg
+                    class="chevron w-4 h-4 text-gray-800 dark:text-white transition-transform duration-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    ></path>
+                  </svg>
+                </div>
+                <ul
+                  class="options absolute left-0 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-lg shadow-lg hidden max-h-32 overflow-y-auto z-50 dropdown-scroll"
+                >
+                  <li
+                    class="option px-2 py-1.5 text-xs md:text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-medium"
+                    data-value="F"
+                  >
+                    Fahrenheit (°F)
+                  </li>
+                  <li
+                    class="option px-2 py-1.5 text-xs md:text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-medium"
+                    data-value="C"
+                  >
+                    Celsius (°C)
+                  </li>
+                  <li
+                    class="option px-2 py-1.5 text-xs md:text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-medium"
+                    data-value="K"
+                  >
+                    Kelvin (K)
+                  </li>
+                </ul>
+              </div>
               <div
                 id="temp-output"
                 class="text-2xl md:text-3xl font-bold text-stripe-orange"
@@ -373,27 +498,27 @@
             class="hidden flex flex-col h-full w-full text-xs md:text-sm font-mono text-gray-700 dark:text-gray-300 space-y-1"
           >
             <div
-              class="flex justify-between cursor-pointer"
-              onclick="setProgBase(16)"
+              class="flex justify-between cursor-pointer base-selector"
+              data-base="16"
             >
               <span>HEX</span><span id="prog-hex">0</span>
             </div>
             <div
-              class="flex justify-between cursor-pointer text-stripe-orange font-bold text-sm md:text-base"
-              onclick="setProgBase(10)"
+              class="flex justify-between cursor-pointer text-stripe-orange font-bold text-sm md:text-base base-selector"
+              data-base="10"
               id="prog-dec-row"
             >
               <span>DEC</span><span id="prog-dec">0</span>
             </div>
             <div
-              class="flex justify-between cursor-pointer"
-              onclick="setProgBase(8)"
+              class="flex justify-between cursor-pointer base-selector"
+              data-base="8"
             >
               <span>OCT</span><span id="prog-oct">0</span>
             </div>
             <div
-              class="flex justify-between cursor-pointer"
-              onclick="setProgBase(2)"
+              class="flex justify-between cursor-pointer base-selector"
+              data-base="2"
             >
               <span>BIN</span
               ><span
