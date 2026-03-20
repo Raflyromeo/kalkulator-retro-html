@@ -33,7 +33,6 @@
       class="fixed inset-0 bg-black/50 z-40 hidden opacity-0 transition-opacity duration-300"
       onclick="toggleMenu()"
     ></div>
-
     <div
       id="menu-sidebar"
       class="fixed top-0 left-0 w-72 h-full bg-calc-bg dark:bg-gray-800 z-50 transform -translate-x-full transition-transform duration-300 shadow-2xl flex flex-col border-r-[8px] border-black dark:border-gray-950"
@@ -41,31 +40,23 @@
       <div
         class="p-6 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center"
       >
-        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">
-          Settings
-        </h2>
+        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">Menu</h2>
         <button
           onclick="toggleMenu()"
-          class="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-bold text-2xl"
+          class="text-gray-600 dark:text-gray-400 hover:text-black font-bold text-2xl"
         >
           &times;
         </button>
       </div>
-
       <div class="p-6 flex-grow overflow-y-auto flex flex-col gap-6">
         <div>
-          <p
-            class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider"
-          >
-            Appearance
-          </p>
           <button
             onclick="toggleTheme()"
-            class="w-full flex items-center justify-between p-3 rounded-xl bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-inner font-medium hover:opacity-90 transition-opacity"
+            class="w-full flex items-center justify-between p-3 rounded-xl bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-inner font-medium"
           >
             <span id="theme-text">Dark Mode</span>
             <div
-              class="w-10 h-6 bg-gray-400 dark:bg-stripe-orange rounded-full p-1 flex items-center transition-colors duration-300"
+              class="w-10 h-6 bg-gray-400 dark:bg-stripe-orange rounded-full p-1 flex items-center"
             >
               <div
                 id="theme-knob"
@@ -74,62 +65,42 @@
             </div>
           </button>
         </div>
-
         <div>
           <p
-            class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider"
+            class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase"
           >
-            Calculator Mode
+            Modes
           </p>
-          <div class="flex flex-col gap-2">
+          <div class="flex flex-col gap-2" id="mode-selectors">
             <button
               onclick="setMode('standard')"
-              id="btn-std"
-              class="text-left p-3 rounded-xl bg-stripe-orange text-white font-medium shadow-md transition-colors"
+              class="mode-btn active bg-stripe-orange text-white p-3 rounded-xl font-medium shadow-md text-left transition-colors"
             >
               Standard
             </button>
             <button
-              onclick="setMode('scientific')"
-              id="btn-sci"
-              class="text-left p-3 rounded-xl bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium transition-colors"
+              onclick="setMode('programmer')"
+              class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors"
             >
-              Scientific
+              Programmer
             </button>
-          </div>
-        </div>
-
-        <div class="flex-grow flex flex-col">
-          <p
-            class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider flex justify-between items-center"
-          >
-            History
             <button
-              onclick="clearHistory()"
-              class="text-xs text-red-500 hover:underline cursor-pointer"
+              onclick="setMode('currency')"
+              class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors"
             >
-              Clear
+              Currency
             </button>
-          </p>
-          <div
-            id="history-list"
-            class="flex-grow bg-keypad-bg dark:bg-gray-700 rounded-xl p-3 text-sm text-gray-600 dark:text-gray-300 shadow-inner overflow-y-auto max-h-[200px] flex flex-col gap-2"
-          >
-            <span class="opacity-50 italic">No history yet...</span>
           </div>
         </div>
       </div>
     </div>
 
     <div
-      class="relative w-full max-w-[380px] md:max-w-[760px] bg-calc-bg dark:bg-gray-800 rounded-[40px] shadow-2xl overflow-hidden border-[10px] border-black dark:border-gray-950 flex flex-col md:flex-row p-6 md:p-8 gap-6 md:gap-8 transition-colors duration-300"
+      class="relative w-full max-w-[380px] md:max-w-[760px] bg-calc-bg dark:bg-gray-800 rounded-[40px] shadow-2xl overflow-hidden border-[10px] border-black dark:border-gray-950 flex flex-col md:flex-row p-6 gap-6 transition-colors duration-300"
     >
       <div class="flex flex-col md:w-1/2 z-10 relative">
         <div class="flex justify-between items-center mb-6 mt-2">
-          <div
-            class="cursor-pointer hover:opacity-70 transition-opacity"
-            onclick="toggleMenu()"
-          >
+          <div class="cursor-pointer hover:opacity-70" onclick="toggleMenu()">
             <div
               class="w-8 h-1.5 bg-black dark:bg-gray-300 rounded-full mb-1.5"
             ></div>
@@ -146,127 +117,98 @@
         </div>
 
         <div
-          class="bg-screen-bg dark:bg-gray-700 border-4 border-screen-border dark:border-gray-900 rounded-2xl h-36 md:h-full min-h-[140px] flex flex-col justify-end items-end p-5 shadow-inner mt-auto transition-colors duration-300"
+          class="bg-screen-bg dark:bg-gray-700 border-4 border-screen-border dark:border-gray-900 rounded-2xl h-44 md:h-full min-h-[170px] flex flex-col justify-end p-5 shadow-inner mt-auto relative"
         >
           <div
-            id="history"
-            class="text-gray-600 dark:text-gray-400 font-medium text-lg tracking-widest mb-1 min-h-[28px]"
-          ></div>
-          <div
-            id="result"
-            class="text-screen-border dark:text-gray-100 font-bold text-5xl md:text-6xl tracking-tight overflow-hidden break-all text-right"
+            id="screen-std"
+            class="flex flex-col items-end justify-end h-full w-full"
           >
-            0
+            <div
+              id="history"
+              class="text-gray-600 dark:text-gray-400 font-medium text-lg tracking-widest mb-1 min-h-[28px]"
+            ></div>
+            <div
+              id="result"
+              class="text-screen-border dark:text-gray-100 font-bold text-5xl md:text-6xl overflow-hidden break-all text-right"
+            >
+              0
+            </div>
+          </div>
+
+          <div
+            id="screen-currency"
+            class="hidden flex flex-col justify-between h-full w-full"
+          >
+            <div
+              class="flex justify-between items-center border-b border-gray-400 dark:border-gray-500 pb-2"
+            >
+              <select
+                id="curr-from"
+                class="bg-transparent text-gray-800 dark:text-white font-bold outline-none cursor-pointer"
+              ></select>
+              <div
+                id="curr-input"
+                class="text-2xl font-bold text-screen-border dark:text-white"
+              >
+                0
+              </div>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <select
+                id="curr-to"
+                class="bg-transparent text-gray-800 dark:text-white font-bold outline-none cursor-pointer"
+              ></select>
+              <div
+                id="curr-output"
+                class="text-3xl font-bold text-stripe-orange"
+              >
+                0
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="screen-prog"
+            class="hidden flex flex-col h-full w-full text-sm font-mono text-gray-700 dark:text-gray-300 space-y-1"
+          >
+            <div
+              class="flex justify-between cursor-pointer hover:text-black dark:hover:text-white"
+              onclick="setProgBase(16)"
+            >
+              <span>HEX</span><span id="prog-hex">0</span>
+            </div>
+            <div
+              class="flex justify-between cursor-pointer text-stripe-orange font-bold text-base"
+              onclick="setProgBase(10)"
+              id="prog-dec-row"
+            >
+              <span>DEC</span><span id="prog-dec">0</span>
+            </div>
+            <div
+              class="flex justify-between cursor-pointer hover:text-black dark:hover:text-white"
+              onclick="setProgBase(8)"
+            >
+              <span>OCT</span><span id="prog-oct">0</span>
+            </div>
+            <div
+              class="flex justify-between cursor-pointer hover:text-black dark:hover:text-white"
+              onclick="setProgBase(2)"
+            >
+              <span>BIN</span
+              ><span id="prog-bin" class="break-all text-right max-w-[200px]"
+                >0</span
+              >
+            </div>
           </div>
         </div>
       </div>
 
       <div
-        class="md:w-1/2 z-10 bg-keypad-bg dark:bg-gray-900 rounded-3xl p-5 md:p-6 flex-grow shadow-inner transition-colors duration-300"
+        class="md:w-1/2 z-10 bg-keypad-bg dark:bg-gray-900 rounded-3xl p-5 flex-grow shadow-inner transition-colors duration-300"
       >
-        <div class="grid grid-cols-4 gap-3 md:gap-4 h-full">
-          <button class="btn btn-action text-white" onclick="clearDisplay()">
-            C
-          </button>
-          <button class="btn btn-op text-white" onclick="toggleSign()">
-            ±
-          </button>
-          <button
-            id="btn-special"
-            class="btn btn-op text-white"
-            onclick="handleSpecialOp()"
-          >
-            %
-          </button>
-          <button class="btn btn-op text-white" onclick="appendOperator('/')">
-            ÷
-          </button>
-
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('7')"
-          >
-            7
-          </button>
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('8')"
-          >
-            8
-          </button>
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('9')"
-          >
-            9
-          </button>
-          <button class="btn btn-op text-white" onclick="appendOperator('*')">
-            ×
-          </button>
-
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('4')"
-          >
-            4
-          </button>
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('5')"
-          >
-            5
-          </button>
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('6')"
-          >
-            6
-          </button>
-          <button class="btn btn-op text-white" onclick="appendOperator('-')">
-            -
-          </button>
-
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('1')"
-          >
-            1
-          </button>
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('2')"
-          >
-            2
-          </button>
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('3')"
-          >
-            3
-          </button>
-          <button class="btn btn-op text-white" onclick="appendOperator('+')">
-            +
-          </button>
-
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow col-span-2 rounded-[30px]"
-            onclick="appendNumber('0')"
-          >
-            0
-          </button>
-          <button
-            class="btn btn-num text-text-orange dark:text-stripe-yellow"
-            onclick="appendNumber('.')"
-          >
-            .
-          </button>
-          <button class="btn btn-op text-white" onclick="calculateResult()">
-            =
-          </button>
-        </div>
+        <div id="keypad-container" class="grid gap-3 h-full"></div>
       </div>
     </div>
-
     <script src="script.js"></script>
   </body>
 </html>
