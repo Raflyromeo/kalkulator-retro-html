@@ -9,6 +9,7 @@ const keypadContainer = document.getElementById("keypad-container");
 const scrStd = document.getElementById("screen-std");
 const scrCurr = document.getElementById("screen-currency");
 const scrProg = document.getElementById("screen-prog");
+const scrTemp = document.getElementById("screen-temp");
 
 document.addEventListener("DOMContentLoaded", () => {
   if (
@@ -85,15 +86,22 @@ function setMode(mode) {
   scrStd.classList.add("hidden");
   scrCurr.classList.add("hidden");
   scrProg.classList.add("hidden");
-  if (mode === "standard") {
+  scrTemp.classList.add("hidden");
+
+  if (mode === "standard" || mode === "scientific") {
     scrStd.classList.remove("hidden");
-    renderKeypad("standard");
+    renderKeypad(mode);
     updateDisplay();
   }
   if (mode === "currency") {
     scrCurr.classList.remove("hidden");
-    renderKeypad("currency");
+    renderKeypad("input_only");
     updateCurrencyUI();
+  }
+  if (mode === "temperature") {
+    scrTemp.classList.remove("hidden");
+    renderKeypad("input_only");
+    updateTempUI();
   }
   if (mode === "programmer") {
     scrProg.classList.remove("hidden");
@@ -105,68 +113,126 @@ function setMode(mode) {
 }
 
 function renderKeypad(type) {
-  keypadContainer.className =
-    type === "programmer" ? "grid grid-prog h-full" : "grid grid-std h-full";
+  keypadContainer.className = `grid grid-${type === "scientific" || type === "programmer" ? type : "std"} h-full`;
 
-  const stdBtns = `
-        <button class="btn btn-round btn-action text-white" onclick="clearDisplay()">C</button>
-        <button class="btn btn-round btn-op text-white" onclick="toggleSign()">±</button>
-        <button class="btn btn-round btn-op text-white" onclick="appendOperator('%')">%</button>
-        <button class="btn btn-round btn-op text-white" onclick="appendOperator('/')">÷</button>
+  const numPadHTML = `
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('7')">7</button>
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('8')">8</button>
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('9')">9</button>
-        <button class="btn btn-round btn-op text-white" onclick="appendOperator('*')">×</button>
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('4')">4</button>
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('5')">5</button>
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('6')">6</button>
-        <button class="btn btn-round btn-op text-white" onclick="appendOperator('-')">-</button>
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('1')">1</button>
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('2')">2</button>
         <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('3')">3</button>
-        <button class="btn btn-round btn-op text-white" onclick="appendOperator('+')">+</button>
-        <button class="btn btn-wide btn-num text-text-orange dark:text-stripe-yellow col-span-2 rounded-[30px]" onclick="appendNumber('0')">0</button>
-        <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">.</button>
-        <button class="btn btn-round btn-op text-white" onclick="calcResult()">=</button>
     `;
 
-  const progBtns = `
-        <button class="btn btn-small btn-action text-white" onclick="clearDisplay()">C</button>
-        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('A')">A</button>
-        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('B')">B</button>
-        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('C')">C</button>
-        <button class="btn btn-small btn-op text-white" onclick="appendProgOp('/')">÷</button>
+  if (type === "standard") {
+    keypadContainer.innerHTML = `
+            <button class="btn btn-round btn-action text-white" onclick="clearDisplay()">C</button>
+            <button class="btn btn-round btn-op text-white" onclick="toggleSign()">±</button>
+            <button class="btn btn-round btn-op text-white" onclick="appendOperator('%')">%</button>
+            <button class="btn btn-round btn-op text-white" onclick="appendOperator('/')">÷</button>
+            ${numPadHTML
+              .replace(/btn-round/g, "btn-round col-span-1")
+              .replace(/<\/button>/g, "</button>")
+              .replace(
+                /9<\/button>/,
+                `9</button><button class="btn btn-round btn-op text-white" onclick="appendOperator('*')">×</button>`,
+              )
+              .replace(
+                /6<\/button>/,
+                `6</button><button class="btn btn-round btn-op text-white" onclick="appendOperator('-')">-</button>`,
+              )
+              .replace(
+                /3<\/button>/,
+                `3</button><button class="btn btn-round btn-op text-white" onclick="appendOperator('+')">+</button>`,
+              )}
+            <button class="btn btn-wide btn-num text-text-orange dark:text-stripe-yellow col-span-2 rounded-[30px]" onclick="appendNumber('0')">0</button>
+            <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">.</button>
+            <button class="btn btn-round btn-op text-white" onclick="calcResult()">=</button>
+        `;
+  } else if (type === "scientific") {
+    keypadContainer.innerHTML = `
+            <button class="btn btn-small btn-action text-white" onclick="clearDisplay()">C</button>
+            <button class="btn btn-small btn-op text-white" onclick="toggleSign()">±</button>
+            <button class="btn btn-small btn-op text-white" onclick="execMath('sin')">sin</button>
+            <button class="btn btn-small btn-op text-white" onclick="execMath('cos')">cos</button>
+            <button class="btn btn-small btn-op text-white" onclick="execMath('tan')">tan</button>
 
-        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('D')">D</button>
-        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('E')">E</button>
-        <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('F')">F</button>
-        <button class="btn btn-small btn-op text-white" onclick="appendProgOp('*')">×</button>
-        <button class="btn btn-small btn-op text-white" onclick="appendProgOp('-')">-</button>
+            <button class="btn btn-small btn-op text-white" onclick="execMath('sqrt')">√</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendOperator('^')">^</button>
+            <button class="btn btn-small btn-op text-white" onclick="execMath('log')">log</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendNumber(Math.PI.toFixed(5))">π</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendOperator('/')">÷</button>
 
-        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('7')">7</button>
-        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('8')">8</button>
-        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('9')">9</button>
-        <button class="btn btn-small btn-op text-white" onclick="appendProgOp('+')">+</button>
-        <button class="btn btn-small btn-op text-white" onclick="calcProgResult()">=</button>
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('7')">7</button>
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('8')">8</button>
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('9')">9</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendOperator('%')">%</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendOperator('*')">×</button>
 
-        <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('4')">4</button>
-        <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('5')">5</button>
-        <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('6')">6</button>
-        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('1')">1</button>
-        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('2')">2</button>
-        
-        <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('3')">3</button>
-        <button class="btn btn-small btn-num prog-bin text-text-orange col-span-2 rounded-[20px]" onclick="appendProg('0')">0</button>
-        <button class="btn btn-small btn-num text-text-orange opacity-40 cursor-not-allowed">.</button>
-        <button class="btn btn-small btn-num opacity-40 cursor-not-allowed">±</button>
-    `;
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('4')">4</button>
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('5')">5</button>
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('6')">6</button>
+            <button class="btn btn-small btn-op text-white" onclick="execMath('ln')">ln</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendOperator('-')">-</button>
 
-  keypadContainer.innerHTML = type === "programmer" ? progBtns : stdBtns;
-  if (type === "programmer") refreshProgKeys();
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('1')">1</button>
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('2')">2</button>
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('3')">3</button>
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('0')">0</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendOperator('+')">+</button>
+            
+            <button class="btn btn-small btn-num text-text-orange dark:text-stripe-yellow col-span-3 rounded-[20px]" onclick="appendNumber('.')">.</button>
+            <button class="btn btn-small btn-op text-white col-span-2 rounded-[20px]" onclick="calcResult()">=</button>
+        `;
+  } else if (type === "programmer") {
+    keypadContainer.innerHTML = `
+            <button class="btn btn-small btn-action text-white" onclick="clearDisplay()">C</button>
+            <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('A')">A</button>
+            <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('B')">B</button>
+            <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('C')">C</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendProgOp('/')">÷</button>
+            <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('D')">D</button>
+            <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('E')">E</button>
+            <button class="btn btn-small btn-num prog-hex text-gray-400" onclick="appendProg('F')">F</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendProgOp('*')">×</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendProgOp('-')">-</button>
+            <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('7')">7</button>
+            <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('8')">8</button>
+            <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('9')">9</button>
+            <button class="btn btn-small btn-op text-white" onclick="appendProgOp('+')">+</button>
+            <button class="btn btn-small btn-op text-white" onclick="calcProgResult()">=</button>
+            <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('4')">4</button>
+            <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('5')">5</button>
+            <button class="btn btn-small btn-num prog-oct text-text-orange" onclick="appendProg('6')">6</button>
+            <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('1')">1</button>
+            <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('2')">2</button>
+            <button class="btn btn-small btn-num prog-dec text-text-orange" onclick="appendProg('3')">3</button>
+            <button class="btn btn-small btn-num prog-bin text-text-orange col-span-3 rounded-[20px]" onclick="appendProg('0')">0</button>
+            <button class="btn btn-small btn-num opacity-40 cursor-not-allowed">.</button>
+        `;
+    refreshProgKeys();
+  } else if (type === "input_only") {
+    keypadContainer.innerHTML = `
+            <button class="btn btn-round btn-action text-white" onclick="clearDisplay()">C</button>
+            <button class="btn btn-round btn-num text-text-orange opacity-40" disabled></button>
+            <button class="btn btn-round btn-num text-text-orange opacity-40" disabled></button>
+            <button class="btn btn-round btn-op text-white" onclick="clearDisplay()">⌫</button>
+            ${numPadHTML.replace(/btn-round/g, "btn-round col-span-1")}
+            <button class="btn btn-round btn-num text-text-orange opacity-40" disabled></button>
+            <button class="btn btn-round btn-num text-text-orange opacity-40" disabled></button>
+            <button class="btn btn-round btn-num text-text-orange opacity-40" disabled></button>
+            <button class="btn btn-wide btn-num text-text-orange dark:text-stripe-yellow col-span-2 rounded-[30px]" onclick="appendNumber('0')">0</button>
+            <button class="btn btn-round btn-num text-text-orange dark:text-stripe-yellow" onclick="appendNumber('.')">.</button>
+            <button class="btn btn-round btn-op text-white" onclick="toggleSign()">±</button>
+        `;
+  }
 }
 
 function updateDisplay() {
-  if (calcMode !== "standard") return;
+  if (calcMode !== "standard" && calcMode !== "scientific") return;
   document.getElementById("result").innerText = currentInput || "0";
   document.getElementById("history").innerText = operator
     ? `${previousInput} ${operator}`
@@ -175,11 +241,11 @@ function updateDisplay() {
 function appendNumber(num) {
   if (num === "." && currentInput.includes(".")) return;
   currentInput = currentInput === "0" && num !== "." ? num : currentInput + num;
-  if (calcMode === "standard") updateDisplay();
+  if (calcMode === "standard" || calcMode === "scientific") updateDisplay();
   if (calcMode === "currency") updateCurrencyUI();
+  if (calcMode === "temperature") updateTempUI();
 }
 function appendOperator(op) {
-  if (calcMode !== "standard") return;
   if (!currentInput && !previousInput) return;
   if (currentInput && previousInput && operator) calcResult(false);
   if (currentInput) {
@@ -189,8 +255,33 @@ function appendOperator(op) {
   operator = op;
   updateDisplay();
 }
+function execMath(func) {
+  if (!currentInput) return;
+  let val = parseFloat(currentInput);
+  switch (func) {
+    case "sin":
+      currentInput = Math.sin(val).toFixed(8);
+      break;
+    case "cos":
+      currentInput = Math.cos(val).toFixed(8);
+      break;
+    case "tan":
+      currentInput = Math.tan(val).toFixed(8);
+      break;
+    case "sqrt":
+      currentInput = Math.sqrt(val).toString();
+      break;
+    case "log":
+      currentInput = Math.log10(val).toString();
+      break;
+    case "ln":
+      currentInput = Math.log(val).toString();
+      break;
+  }
+  currentInput = parseFloat(currentInput).toString();
+  updateDisplay();
+}
 function calcResult(isFinal = true) {
-  if (calcMode !== "standard") return;
   const prev = parseFloat(previousInput);
   const curr = parseFloat(currentInput);
   if (isNaN(prev) || isNaN(curr)) return;
@@ -211,6 +302,9 @@ function calcResult(isFinal = true) {
     case "%":
       res = prev % curr;
       break;
+    case "^":
+      res = Math.pow(prev, curr);
+      break;
   }
   res = typeof res === "number" ? Math.round(res * 1e8) / 1e8 : res;
   if (isFinal) {
@@ -229,11 +323,13 @@ function clearDisplay() {
   updateDisplay();
   updateProgUI();
   updateCurrencyUI();
+  updateTempUI();
 }
 function toggleSign() {
   if (!currentInput) return;
   currentInput = (parseFloat(currentInput) * -1).toString();
   updateDisplay();
+  updateTempUI();
 }
 
 function setProgBase(base) {
@@ -241,18 +337,16 @@ function setProgBase(base) {
   let baseNames = { 16: "HEX", 10: "DEC", 8: "OCT", 2: "BIN" };
   document.querySelectorAll("#screen-prog > div").forEach((el) => {
     el.classList.remove("text-stripe-orange", "font-bold", "text-base");
-    el.classList.add("hover:text-black", "dark:hover:text-white");
   });
   let activeRow = document.getElementById(
     `prog-${baseNames[base].toLowerCase()}`,
   ).parentElement;
   activeRow.classList.add("text-stripe-orange", "font-bold", "text-base");
-  activeRow.classList.remove("hover:text-black", "dark:hover:text-white");
 
   if (currentInput && currentInput !== "Error") {
     let decimalValue = parseInt(
       currentInput,
-      [16, 10, 8, 2].includes(progBase) ? prevBase : 10,
+      [16, 10, 8, 2].includes(progBase) ? window.prevBase || 10 : 10,
     );
     if (!isNaN(decimalValue))
       currentInput = decimalValue.toString(progBase).toUpperCase();
@@ -336,8 +430,10 @@ async function fetchCurrencies() {
     const fromSel = document.getElementById("curr-from");
     const toSel = document.getElementById("curr-to");
     Object.keys(exchangeRates).forEach((currency) => {
-      fromSel.innerHTML += `<option value="${currency}" ${currency === "USD" ? "selected" : ""}>${currency}</option>`;
-      toSel.innerHTML += `<option value="${currency}" ${currency === "IDR" ? "selected" : ""}>${currency}</option>`;
+      let optionClass =
+        "bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white";
+      fromSel.innerHTML += `<option class="${optionClass}" value="${currency}" ${currency === "USD" ? "selected" : ""}>${currency}</option>`;
+      toSel.innerHTML += `<option class="${optionClass}" value="${currency}" ${currency === "IDR" ? "selected" : ""}>${currency}</option>`;
     });
     fromSel.addEventListener("change", updateCurrencyUI);
     toSel.addEventListener("change", updateCurrencyUI);
@@ -354,6 +450,29 @@ function updateCurrencyUI() {
   const toRate = exchangeRates[document.getElementById("curr-to").value] || 1;
   let converted = (val / fromRate) * toRate;
   document.getElementById("curr-output").innerText = converted.toLocaleString(
+    "en-US",
+    { maximumFractionDigits: 2 },
+  );
+}
+
+function updateTempUI() {
+  if (calcMode !== "temperature") return;
+  let val = parseFloat(currentInput || "0");
+  document.getElementById("temp-input").innerText = currentInput || "0";
+  const fromType = document.getElementById("temp-from").value;
+  const toType = document.getElementById("temp-to").value;
+
+  let celsius;
+  if (fromType === "C") celsius = val;
+  else if (fromType === "F") celsius = ((val - 32) * 5) / 9;
+  else if (fromType === "K") celsius = val - 273.15;
+
+  let converted;
+  if (toType === "C") converted = celsius;
+  else if (toType === "F") converted = (celsius * 9) / 5 + 32;
+  else if (toType === "K") converted = celsius + 273.15;
+
+  document.getElementById("temp-output").innerText = converted.toLocaleString(
     "en-US",
     { maximumFractionDigits: 2 },
   );
