@@ -1,73 +1,23 @@
 .btn {
-  border-radius: 9999px;
-  font-size: 1.5rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-  border: none;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  aspect-ratio: 1 / 1;
+    border-radius: 9999px; font-size: 1.5rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s ease-in-out;
+    border: none; outline: none; -webkit-tap-highlight-color: transparent;
 }
+.btn-round { aspect-ratio: 1 / 1; }
+.btn-wide { aspect-ratio: auto; }
+.btn-small { font-size: 1.1rem; border-radius: 12px; } 
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.col-span-2 {
-  aspect-ratio: auto;
-}
+.btn-num { background-color: #F7EFE1; box-shadow: -2px -2px 6px rgba(255,255,255,0.9), 3px 5px 10px rgba(180,170,160,0.5), inset 0px -2px 4px rgba(200,190,180,0.2); }
+.btn-op { background-color: #F0B161; box-shadow: -1px -1px 4px rgba(255,255,255,0.4), 3px 5px 10px rgba(200,140,70,0.4), inset 0px -2px 4px rgba(200,120,50,0.2); }
+.btn-action { background-color: #D76231; box-shadow: -1px -1px 4px rgba(255,255,255,0.3), 3px 5px 10px rgba(180,70,30,0.4), inset 0px -2px 4px rgba(150,50,20,0.3); }
+.btn:active:not(:disabled) { transform: translateY(3px) scale(0.95); box-shadow: inset 3px 3px 8px rgba(0,0,0,0.15), inset -3px -3px 8px rgba(255,255,255,0.6); }
 
-.btn-num {
-  background-color: #f7efe1;
-  box-shadow:
-    -2px -2px 6px rgba(255, 255, 255, 0.9),
-    3px 5px 10px rgba(180, 170, 160, 0.5),
-    inset 0px -2px 4px rgba(200, 190, 180, 0.2);
-}
-.btn-op {
-  background-color: #f0b161;
-  box-shadow:
-    -1px -1px 4px rgba(255, 255, 255, 0.4),
-    3px 5px 10px rgba(200, 140, 70, 0.4),
-    inset 0px -2px 4px rgba(200, 120, 50, 0.2);
-}
-.btn-action {
-  background-color: #d76231;
-  box-shadow:
-    -1px -1px 4px rgba(255, 255, 255, 0.3),
-    3px 5px 10px rgba(180, 70, 30, 0.4),
-    inset 0px -2px 4px rgba(150, 50, 20, 0.3);
-}
-.btn:active {
-  transform: translateY(3px) scale(0.95);
-  box-shadow:
-    inset 3px 3px 8px rgba(0, 0, 0, 0.15),
-    inset -3px -3px 8px rgba(255, 255, 255, 0.6);
-}
+.dark .btn-num { background-color: #374151; box-shadow: -2px -2px 6px rgba(255,255,255,0.05), 3px 5px 10px rgba(0,0,0,0.6), inset 0px -2px 4px rgba(0,0,0,0.3); }
+.dark .btn-op { background-color: #b46b1d; box-shadow: -2px -2px 6px rgba(255,255,255,0.1), 3px 5px 10px rgba(0,0,0,0.5), inset 0px -2px 4px rgba(0,0,0,0.3); }
+.dark .btn-action { background-color: #a8421b; box-shadow: -2px -2px 6px rgba(255,255,255,0.1), 3px 5px 10px rgba(0,0,0,0.5), inset 0px -2px 4px rgba(0,0,0,0.3); }
+.dark .btn:active:not(:disabled) { box-shadow: inset 3px 3px 8px rgba(0,0,0,0.5), inset -2px -2px 6px rgba(255,255,255,0.05); }
 
-.dark .btn-num {
-  background-color: #374151;
-  box-shadow:
-    -2px -2px 6px rgba(255, 255, 255, 0.05),
-    3px 5px 10px rgba(0, 0, 0, 0.6),
-    inset 0px -2px 4px rgba(0, 0, 0, 0.3);
-}
-.dark .btn-op {
-  background-color: #b46b1d;
-  box-shadow:
-    -2px -2px 6px rgba(255, 255, 255, 0.1),
-    3px 5px 10px rgba(0, 0, 0, 0.5),
-    inset 0px -2px 4px rgba(0, 0, 0, 0.3);
-}
-.dark .btn-action {
-  background-color: #a8421b;
-  box-shadow:
-    -2px -2px 6px rgba(255, 255, 255, 0.1),
-    3px 5px 10px rgba(0, 0, 0, 0.5),
-    inset 0px -2px 4px rgba(0, 0, 0, 0.3);
-}
-.dark .btn:active {
-  box-shadow:
-    inset 3px 3px 8px rgba(0, 0, 0, 0.5),
-    inset -2px -2px 6px rgba(255, 255, 255, 0.05);
-}
+.grid-prog { grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+.grid-std { grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
