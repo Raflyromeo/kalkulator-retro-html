@@ -49,22 +49,20 @@
         </button>
       </div>
       <div class="p-6 flex-grow overflow-y-auto flex flex-col gap-6">
-        <div>
-          <button
-            onclick="toggleTheme()"
-            class="w-full flex items-center justify-between p-3 rounded-xl bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-inner font-medium"
+        <button
+          onclick="toggleTheme()"
+          class="w-full flex items-center justify-between p-3 rounded-xl bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-inner font-medium"
+        >
+          <span id="theme-text">Dark Mode</span>
+          <div
+            class="w-10 h-6 bg-gray-400 dark:bg-stripe-orange rounded-full p-1 flex items-center"
           >
-            <span id="theme-text">Dark Mode</span>
             <div
-              class="w-10 h-6 bg-gray-400 dark:bg-stripe-orange rounded-full p-1 flex items-center"
-            >
-              <div
-                id="theme-knob"
-                class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300"
-              ></div>
-            </div>
-          </button>
-        </div>
+              id="theme-knob"
+              class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300"
+            ></div>
+          </div>
+        </button>
         <div>
           <p
             class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase"
@@ -79,6 +77,12 @@
               Standard
             </button>
             <button
+              onclick="setMode('scientific')"
+              class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors"
+            >
+              Scientific
+            </button>
+            <button
               onclick="setMode('programmer')"
               class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors"
             >
@@ -89,6 +93,12 @@
               class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors"
             >
               Currency
+            </button>
+            <button
+              onclick="setMode('temperature')"
+              class="mode-btn bg-keypad-bg dark:bg-gray-700 text-gray-800 dark:text-gray-100 p-3 rounded-xl font-medium text-left transition-colors"
+            >
+              Temperature
             </button>
           </div>
         </div>
@@ -129,7 +139,7 @@
             ></div>
             <div
               id="result"
-              class="text-screen-border dark:text-gray-100 font-bold text-5xl md:text-6xl overflow-hidden break-all text-right"
+              class="text-screen-border dark:text-gray-100 font-bold text-5xl overflow-hidden break-all text-right"
             >
               0
             </div>
@@ -144,7 +154,7 @@
             >
               <select
                 id="curr-from"
-                class="bg-transparent text-gray-800 dark:text-white font-bold outline-none cursor-pointer"
+                class="bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white font-bold outline-none cursor-pointer p-1 rounded-md appearance-none border border-gray-400 pr-6 relative"
               ></select>
               <div
                 id="curr-input"
@@ -156,7 +166,7 @@
             <div class="flex justify-between items-center pt-2">
               <select
                 id="curr-to"
-                class="bg-transparent text-gray-800 dark:text-white font-bold outline-none cursor-pointer"
+                class="bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white font-bold outline-none cursor-pointer p-1 rounded-md appearance-none border border-gray-400 pr-6 relative"
               ></select>
               <div
                 id="curr-output"
@@ -168,11 +178,53 @@
           </div>
 
           <div
+            id="screen-temp"
+            class="hidden flex flex-col justify-between h-full w-full"
+          >
+            <div
+              class="flex justify-between items-center border-b border-gray-400 dark:border-gray-500 pb-2"
+            >
+              <select
+                id="temp-from"
+                onchange="updateTempUI()"
+                class="bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white font-bold outline-none cursor-pointer p-1 rounded-md appearance-none border border-gray-400"
+              >
+                <option value="C">Celsius (°C)</option>
+                <option value="F">Fahrenheit (°F)</option>
+                <option value="K">Kelvin (K)</option>
+              </select>
+              <div
+                id="temp-input"
+                class="text-2xl font-bold text-screen-border dark:text-white"
+              >
+                0
+              </div>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <select
+                id="temp-to"
+                onchange="updateTempUI()"
+                class="bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white font-bold outline-none cursor-pointer p-1 rounded-md appearance-none border border-gray-400"
+              >
+                <option value="F">Fahrenheit (°F)</option>
+                <option value="C">Celsius (°C)</option>
+                <option value="K">Kelvin (K)</option>
+              </select>
+              <div
+                id="temp-output"
+                class="text-3xl font-bold text-stripe-orange"
+              >
+                32
+              </div>
+            </div>
+          </div>
+
+          <div
             id="screen-prog"
             class="hidden flex flex-col h-full w-full text-sm font-mono text-gray-700 dark:text-gray-300 space-y-1"
           >
             <div
-              class="flex justify-between cursor-pointer hover:text-black dark:hover:text-white"
+              class="flex justify-between cursor-pointer"
               onclick="setProgBase(16)"
             >
               <span>HEX</span><span id="prog-hex">0</span>
@@ -185,13 +237,13 @@
               <span>DEC</span><span id="prog-dec">0</span>
             </div>
             <div
-              class="flex justify-between cursor-pointer hover:text-black dark:hover:text-white"
+              class="flex justify-between cursor-pointer"
               onclick="setProgBase(8)"
             >
               <span>OCT</span><span id="prog-oct">0</span>
             </div>
             <div
-              class="flex justify-between cursor-pointer hover:text-black dark:hover:text-white"
+              class="flex justify-between cursor-pointer"
               onclick="setProgBase(2)"
             >
               <span>BIN</span
