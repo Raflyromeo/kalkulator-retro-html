@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kalkulator-retro-html</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'calc-bg': '#F8F1E5',
+                        'stripe-orange': '#DF663A',
+                        'stripe-yellow': '#F1C07C',
+                        'screen-bg': '#C5D1B5',
+                        'screen-border': '#1E201C',
+                        'keypad-bg': '#E9E2D8',
+                        'text-orange': '#DA813B'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-800 flex items-center justify-center min-h-screen p-4 font-sans selection:bg-none overflow-x-hidden">
+
+    <div id="menu-backdrop" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity duration-300" onclick="toggleMenu()"></div>
+    
+    <div id="menu-sidebar" class="fixed top-0 left-0 w-64 h-full bg-calc-bg z-50 transform -translate-x-full transition-transform duration-300 shadow-2xl p-6 border-r-[8px] border-black flex flex-col">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-xl font-bold text-gray-800">Menu</h2>
+            <button onclick="toggleMenu()" class="text-gray-600 hover:text-black font-bold text-xl">&times;</button>
+        </div>
+        <nav class="flex flex-col gap-4 text-gray-700 font-medium">
+            <a href="#" class="hover:text-stripe-orange transition-colors flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-stripe-orange"></span> Standard
+            </a>
+            <a href="#" class="hover:text-stripe-orange transition-colors flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-transparent border border-gray-400"></span> Scientific
+            </a>
+            <a href="#" class="hover:text-stripe-orange transition-colors flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-transparent border border-gray-400"></span> Programmer Mode
+            </a>
+            <hr class="border-gray-300 my-2">
+            <a href="#" class="hover:text-stripe-orange transition-colors">History</a>
+            <a href="#" class="hover:text-stripe-orange transition-colors">Settings</a>
+        </nav>
+    </div>
+
+    <div class="relative w-full max-w-[380px] md:max-w-[760px] bg-calc-bg rounded-[40px] shadow-2xl overflow-hidden border-[10px] border-black flex flex-col md:flex-row p-6 md:p-8 gap-6 md:gap-8 transition-all duration-300">
+        
+        <div class="absolute top-0 left-12 md:left-20 flex h-32 z-0 opacity-80">
+            <div class="w-3 bg-stripe-orange mr-1"></div>
+            <div class="w-3 bg-stripe-yellow"></div>
+        </div>
+
+        <div class="flex flex-col md:w-1/2 z-10 relative">
+            <div class="mb-6 cursor-pointer inline-block mt-4 hover:opacity-70 transition-opacity" onclick="toggleMenu()">
+                <div class="w-8 h-1.5 bg-black rounded-full mb-1.5"></div>
+                <div class="w-5 h-1.5 bg-black rounded-full mb-1.5"></div>
+                <div class="w-8 h-1.5 bg-black rounded-full"></div>
+            </div>
+
+            <div class="bg-screen-bg border-4 border-screen-border rounded-2xl h-36 md:h-full min-h-[140px] flex flex-col justify-end items-end p-5 shadow-inner mt-auto">
+                <div id="history" class="text-gray-500 font-medium text-lg tracking-widest mb-1 opacity-70 min-h-[28px]"></div>
+                <div id="result" class="text-screen-border font-bold text-5xl md:text-6xl tracking-tight overflow-hidden break-all text-right">0</div>
+            </div>
+        </div>
+
+        <div class="md:w-1/2 z-10 bg-keypad-bg rounded-3xl p-5 md:p-6 flex-grow shadow-inner">
+            <div class="grid grid-cols-4 gap-3 md:gap-4 h-full">
+                <button class="btn btn-action text-white" onclick="clearDisplay()">C</button>
+                <button class="btn btn-op text-white" onclick="toggleSign()">±</button>
+                <button class="btn btn-op text-white" onclick="appendOperator('%')">%</button>
+                <button class="btn btn-op text-white" onclick="appendOperator('/')">÷</button>
+
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('7')">7</button>
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('8')">8</button>
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('9')">9</button>
+                <button class="btn btn-op text-white" onclick="appendOperator('*')">×</button>
+
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('4')">4</button>
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('5')">5</button>
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('6')">6</button>
+                <button class="btn btn-op text-white" onclick="appendOperator('-')">-</button>
+
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('1')">1</button>
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('2')">2</button>
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('3')">3</button>
+                <button class="btn btn-op text-white" onclick="appendOperator('+')">+</button>
+
+                <button class="btn btn-num text-text-orange col-span-2 rounded-[30px]" onclick="appendNumber('0')">0</button>
+                <button class="btn btn-num text-text-orange" onclick="appendNumber('.')">.</button>
+                <button class="btn btn-op text-white" onclick="calculateResult()">=</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
