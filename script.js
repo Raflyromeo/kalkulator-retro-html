@@ -22,9 +22,88 @@ document.addEventListener("DOMContentLoaded", () => {
     document.documentElement.classList.add("dark");
     updateThemeUI(true);
   }
+  setupEvents();
   renderKeypad("standard");
   fetchCurrencies();
 });
+
+function setupEvents() {
+  document
+    .getElementById("open-menu-btn")
+    .addEventListener("click", toggleMenu);
+  document
+    .getElementById("close-menu-btn")
+    .addEventListener("click", toggleMenu);
+  document
+    .getElementById("menu-backdrop")
+    .addEventListener("click", toggleMenu);
+  document
+    .getElementById("theme-toggle-btn")
+    .addEventListener("click", toggleTheme);
+  document
+    .getElementById("clear-history-btn")
+    .addEventListener("click", clearHistory);
+  document
+    .getElementById("open-modal-btn")
+    .addEventListener("click", toggleModal);
+  document
+    .getElementById("close-modal-btn")
+    .addEventListener("click", toggleModal);
+
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) =>
+      setMode(e.currentTarget.getAttribute("data-mode")),
+    );
+  });
+
+  document.querySelectorAll(".base-selector").forEach((selector) => {
+    selector.addEventListener("click", (e) =>
+      setProgBase(parseInt(e.currentTarget.getAttribute("data-base"))),
+    );
+  });
+
+  document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
+    const btn = dropdown.querySelector(".select-btn");
+    const optionsContainer = dropdown.querySelector(".options");
+    const chevron = dropdown.querySelector(".chevron");
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      document.querySelectorAll(".custom-dropdown .options").forEach((opt) => {
+        if (opt !== optionsContainer) {
+          opt.classList.add("hidden");
+          opt.parentElement
+            .querySelector(".chevron")
+            .classList.remove("rotate-180");
+        }
+      });
+      optionsContainer.classList.toggle("hidden");
+      chevron.classList.toggle("rotate-180");
+    });
+
+    optionsContainer.addEventListener("click", (e) => {
+      const option = e.target.closest(".option");
+      if (!option) return;
+      const value = option.getAttribute("data-value");
+      const text = option.innerText;
+      dropdown.setAttribute("data-value", value);
+      dropdown.querySelector(".sBtn-text").innerText = text;
+      optionsContainer.classList.add("hidden");
+      chevron.classList.remove("rotate-180");
+      if (dropdown.id.startsWith("curr")) updateCurrencyUI();
+      if (dropdown.id.startsWith("temp")) updateTempUI();
+    });
+  });
+
+  document.addEventListener("click", () => {
+    document
+      .querySelectorAll(".custom-dropdown .options")
+      .forEach((opt) => opt.classList.add("hidden"));
+    document
+      .querySelectorAll(".custom-dropdown .chevron")
+      .forEach((chev) => chev.classList.remove("rotate-180"));
+  });
+}
 
 function toggleMenu() {
   const backdrop = document.getElementById("menu-backdrop");
@@ -116,8 +195,9 @@ function setMode(mode) {
       "dark:text-gray-100",
     );
   });
-  event.currentTarget.classList.add("bg-stripe-orange", "text-white");
-  event.currentTarget.classList.remove(
+  const activeBtn = document.querySelector(`.mode-btn[data-mode="${mode}"]`);
+  activeBtn.classList.add("bg-stripe-orange", "text-white");
+  activeBtn.classList.remove(
     "bg-keypad-bg",
     "dark:bg-gray-700",
     "text-gray-800",
@@ -224,7 +304,7 @@ function renderKeypad(type) {
             
             <button class="btn text-sm md:text-xl btn-num prog-hex text-gray-400 py-2" onclick="appendProg('E')">E</button>
             <button class="btn text-sm md:text-xl btn-num prog-hex text-gray-400" onclick="appendProg('F')">F</button>
-            <button class="btn text-sm md:text-xl btn-action text-white" onclick="clearDisplay()">CLR</button>
+            <button class="btn text-sm md:text-xl btn-action text-white" onclick="clearDisplay()">C</button>
             <button class="btn text-sm md:text-xl btn-op text-white" onclick="backspace()">⌫</button>
             
             <button class="btn text-sm md:text-xl btn-num prog-dec text-text-orange py-2" onclick="appendProg('7')">7</button>
@@ -398,9 +478,7 @@ function setProgBase(base) {
       "md:text-base",
     );
   });
-  let activeRow = document.getElementById(
-    `prog-${baseNames[base].toLowerCase()}`,
-  ).parentElement;
+  let activeRow = document.querySelector(`.base-selector[data-base="${base}"]`);
   activeRow.classList.add(
     "text-stripe-orange",
     "font-bold",
@@ -497,16 +575,22 @@ async function fetchCurrencies() {
     const res = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
     const data = await res.json();
     exchangeRates = data.rates;
-    const fromSel = document.getElementById("curr-from");
-    const toSel = document.getElementById("curr-to");
+    const fromOpts = document.querySelector("#curr-from-dropdown .options");
+    const toOpts = document.querySelector("#curr-to-dropdown .options");
+    let html = "";
     Object.keys(exchangeRates).forEach((currency) => {
-      let optionClass =
-        "bg-calc-bg dark:bg-gray-800 text-gray-800 dark:text-white";
-      fromSel.innerHTML += `<option class="${optionClass}" value="${currency}" ${currency === "USD" ? "selected" : ""}>${currency}</option>`;
-      toSel.innerHTML += `<option class="${optionClass}" value="${currency}" ${currency === "IDR" ? "selected" : ""}>${currency}</option>`;
+      html += `<li class="option px-2 py-1.5 text-xs md:text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-medium" data-value="${currency}">${currency}</li>`;
     });
-    fromSel.addEventListener("change", updateCurrencyUI);
-    toSel.addEventListener("change", updateCurrencyUI);
+    fromOpts.innerHTML = html;
+    toOpts.innerHTML = html;
+    document
+      .getElementById("curr-from-dropdown")
+      .setAttribute("data-value", "USD");
+    document.querySelector("#curr-from-dropdown .sBtn-text").innerText = "USD";
+    document
+      .getElementById("curr-to-dropdown")
+      .setAttribute("data-value", "IDR");
+    document.querySelector("#curr-to-dropdown .sBtn-text").innerText = "IDR";
   } catch (e) {
     document.getElementById("curr-output").innerText = "API Error";
   }
@@ -516,9 +600,14 @@ function updateCurrencyUI() {
   if (calcMode !== "currency") return;
   let val = parseFloat(currentInput || "0");
   document.getElementById("curr-input").innerText = val.toLocaleString("en-US");
-  const fromRate =
-    exchangeRates[document.getElementById("curr-from").value] || 1;
-  const toRate = exchangeRates[document.getElementById("curr-to").value] || 1;
+  const fromVal =
+    document.getElementById("curr-from-dropdown").getAttribute("data-value") ||
+    "USD";
+  const toVal =
+    document.getElementById("curr-to-dropdown").getAttribute("data-value") ||
+    "IDR";
+  const fromRate = exchangeRates[fromVal] || 1;
+  const toRate = exchangeRates[toVal] || 1;
   let converted = (val / fromRate) * toRate;
   document.getElementById("curr-output").innerText = converted.toLocaleString(
     "en-US",
@@ -530,9 +619,12 @@ function updateTempUI() {
   if (calcMode !== "temperature") return;
   let val = parseFloat(currentInput || "0");
   document.getElementById("temp-input").innerText = currentInput || "0";
-  const fromType = document.getElementById("temp-from").value;
-  const toType = document.getElementById("temp-to").value;
-
+  const fromType = document
+    .getElementById("temp-from-dropdown")
+    .getAttribute("data-value");
+  const toType = document
+    .getElementById("temp-to-dropdown")
+    .getAttribute("data-value");
   let celsius;
   if (fromType === "C") celsius = val;
   else if (fromType === "F") celsius = ((val - 32) * 5) / 9;
